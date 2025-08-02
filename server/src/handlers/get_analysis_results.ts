@@ -1,9 +1,24 @@
 
+import { db } from '../db';
+import { analysisResultsTable } from '../db/schema';
 import { type AnalysisResult } from '../schema';
+import { desc } from 'drizzle-orm';
 
-export async function getAnalysisResults(): Promise<AnalysisResult[]> {
-    // This is a placeholder declaration! Real code should be implemented here.
-    // The goal of this handler is to fetch all analysis results from the database
-    // with their related file upload information, ordered by creation date.
-    return Promise.resolve([]);
-}
+export const getAnalysisResults = async (): Promise<AnalysisResult[]> => {
+  try {
+    const results = await db.select()
+      .from(analysisResultsTable)
+      .orderBy(desc(analysisResultsTable.created_at))
+      .execute();
+
+    // Convert numeric fields back to numbers
+    return results.map(result => ({
+      ...result,
+      min_support: parseFloat(result.min_support),
+      min_confidence: parseFloat(result.min_confidence)
+    }));
+  } catch (error) {
+    console.error('Failed to fetch analysis results:', error);
+    throw error;
+  }
+};

@@ -1,9 +1,30 @@
 
+import { db } from '../db';
+import { analysisResultsTable } from '../db/schema';
 import { type AnalysisResult } from '../schema';
+import { eq } from 'drizzle-orm';
 
-export async function getAnalysisById(analysisId: number): Promise<AnalysisResult | null> {
-    // This is a placeholder declaration! Real code should be implemented here.
-    // The goal of this handler is to fetch a specific analysis result by ID
-    // including all related data (file upload, frequent itemsets, association rules).
-    return Promise.resolve(null);
-}
+export const getAnalysisById = async (analysisId: number): Promise<AnalysisResult | null> => {
+  try {
+    const results = await db.select()
+      .from(analysisResultsTable)
+      .where(eq(analysisResultsTable.id, analysisId))
+      .execute();
+
+    if (results.length === 0) {
+      return null;
+    }
+
+    const analysisResult = results[0];
+    
+    // Convert numeric fields back to numbers
+    return {
+      ...analysisResult,
+      min_support: parseFloat(analysisResult.min_support),
+      min_confidence: parseFloat(analysisResult.min_confidence)
+    };
+  } catch (error) {
+    console.error('Failed to get analysis by ID:', error);
+    throw error;
+  }
+};

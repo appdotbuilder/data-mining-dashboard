@@ -1,18 +1,27 @@
 
+import { db } from '../db';
+import { fileUploadsTable } from '../db/schema';
 import { type CreateFileUploadInput, type FileUpload } from '../schema';
 
-export async function uploadFile(input: CreateFileUploadInput): Promise<FileUpload> {
-    // This is a placeholder declaration! Real code should be implemented here.
-    // The goal of this handler is to save file upload metadata to the database
-    // and return the created file upload record with generated ID.
-    return Promise.resolve({
-        id: 1, // Placeholder ID
+export const uploadFile = async (input: CreateFileUploadInput): Promise<FileUpload> => {
+  try {
+    // Insert file upload record
+    const result = await db.insert(fileUploadsTable)
+      .values({
         filename: input.filename,
         original_name: input.original_name,
         file_size: input.file_size,
         mime_type: input.mime_type,
-        file_path: input.file_path,
-        upload_date: new Date(),
-        status: 'pending' as const
-    });
-}
+        file_path: input.file_path
+        // upload_date and status have defaults in the database
+      })
+      .returning()
+      .execute();
+
+    const fileUpload = result[0];
+    return fileUpload;
+  } catch (error) {
+    console.error('File upload failed:', error);
+    throw error;
+  }
+};
